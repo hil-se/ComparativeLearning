@@ -4,7 +4,7 @@ pd.set_option('display.max_columns', None)
 # import fasttext as ft
 import os
 import re
-from nltk.corpus import stopwords
+# from nltk.corpus import stopwords
 import random
 from transformers import GPT2Tokenizer
 import torch
