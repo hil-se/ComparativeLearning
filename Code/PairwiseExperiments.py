@@ -116,8 +116,8 @@ def trainModel(dataname, train, val, test_list):
     model_path = "../../Data/GPT2SP Data/Models/"+dataname+".pth"
 
     # loss_fn = torch.nn.L1Loss()
-    loss_fn = torch.nn.HingeEmbeddingLoss()
-    # loss_fn = torch.nn.MarginRankingLoss()
+    # loss_fn = torch.nn.HingeEmbeddingLoss()
+    loss_fn = torch.nn.MarginRankingLoss()
     # loss_fn = torch.nn.L1Loss()
 
     # loss_fn = BinaryHingeLoss()
