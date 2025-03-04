@@ -1,13 +1,14 @@
-import nltk
+# import nltk
 import pandas as pd
 pd.set_option('display.max_columns', None)
-# import fasttext as ft
+import fasttext as ft
 import os
 import re
 # from nltk.corpus import stopwords
 import random
 from transformers import GPT2Tokenizer
 import torch
+import numpy as np
 # nltk.download('stopwords')
 to_remove = [",", ".", "<", ">", "?", "/", ";", ":", "'", "!", "#", "$", "%", "^", "~",
              "*", "(", ")", "{", "}", "[", "]", "\\", "-", "_", "\n", "\t" "@", "&", "`"]
@@ -72,7 +73,7 @@ def filter(text):
     return text
 
 def loadData(dataName="appceleratorstudio", datatype="train"):
-    path = "../../Data/GPT2SP Data/Split/"
+    path = "../Data/GPT2SP Data/Split/"
     df = pd.read_csv(path+dataName+"_"+datatype+".csv")
 
     # df = df.sample(frac=1)
@@ -92,10 +93,132 @@ def GPTencode(tokenizer, sentence):
     return encoded
     # return torch.Tensor(encoded).to(torch.int)
 
+# ftmodel = ft.load_model("../../cc.en.300.bin")
+
+def getProjectStatistics(dataName):
+    print(dataName)
+    train = loadData(dataName=dataName, datatype="train")
+    valid = loadData(dataName=dataName, datatype="val")
+    test = loadData(dataName=dataName, datatype="test")
+
+    train_len = len(train.index)
+    val_len = len(valid.index)
+    test_len = len(test.index)
+
+    train_min_sp = min(train["Storypoint"].tolist())
+    train_max_sp = max(train["Storypoint"].tolist())
+    train_avg_sp = sum(train["Storypoint"].tolist())/train_len
+    # train_med_sp = np.median(train["Storypoint"].tolist())
+
+    val_min_sp = min(valid["Storypoint"].tolist())
+    val_max_sp = max(valid["Storypoint"].tolist())
+    val_avg_sp = sum(valid["Storypoint"].tolist())/val_len
+    # val_med_sp = np.median(valid["Storypoint"].tolist())
+
+    test_min_sp = min(test["Storypoint"].tolist())
+    test_max_sp = max(test["Storypoint"].tolist())
+    test_avg_sp = sum(test["Storypoint"].tolist())/test_len
+    # test_med_sp = np.median(test["Storypoint"].tolist())
+
+    train_min_issue_len = min(len(ele) for ele in train["Issue"].tolist())
+    train_max_issue_len = max(len(ele) for ele in train["Issue"].tolist())
+    train_avg_issue_len = sum(len(ele) for ele in train["Issue"].tolist())/train_len
+    # train_med_issue_len = np.median(len(ele) for ele in train["Issue"].tolist())
+
+    val_min_issue_len = min(len(ele) for ele in valid["Issue"].tolist())
+    val_max_issue_len = max(len(ele) for ele in valid["Issue"].tolist())
+    val_avg_issue_len = sum(len(ele) for ele in valid["Issue"].tolist())/val_len
+    # val_med_issue_len = np.median(len(ele) for ele in valid["Issue"].tolist())
+
+    test_min_issue_len = min(len(ele) for ele in test["Issue"].tolist())
+    test_max_issue_len = max(len(ele) for ele in test["Issue"].tolist())
+    test_avg_issue_len = sum(len(ele) for ele in test["Issue"].tolist())/test_len
+    # test_med_issue_len = np.median(len(ele) for ele in test["Issue"].tolist())
+
+    return {"Project": dataName,
+            "Data points (train)": train_len,
+            "Data points (valid)": val_len,
+            "Data points (test)": test_len,
+            "Min Issue length (train)": train_min_issue_len,
+            "Avg Issue length (train)": train_avg_issue_len,
+            "Max Issue length (train)": train_max_issue_len,
+            # "Med Issue length (train)": train_med_issue_len,
+            "Min Issue length (valid)": val_min_issue_len,
+            "Avg Issue length (valid)": val_avg_issue_len,
+            "Max Issue length (valid)": val_max_issue_len,
+            # "Med Issue length (valid)": val_med_issue_len,
+            "Min Issue length (test)": test_min_issue_len,
+            "Avg Issue length (test)": test_avg_issue_len,
+            "Max Issue length (test)": test_max_issue_len,
+            "Min SP (train)": train_min_sp,
+            "Avg SP (train)": train_avg_sp,
+            "Max SP (train)": train_max_sp,
+            # "Med SP (train)": train_med_sp,
+            "Min SP (valid)": val_min_sp,
+            "Avg SP (valid)": val_avg_sp,
+            "Max SP (valid)": val_max_sp,
+            # "Med SP (valid)": val_med_sp,
+            "Min SP (test)": test_min_sp,
+            "Avg SP (test)": test_avg_sp,
+            "Max SP (test)": test_max_sp}
+            # "Med SP (test)": test_med_sp,
+            # "Med Issue length (test)": test_med_issue_len}
+
+def getProjectStatisticsSummary(dataName):
+    print(dataName)
+    train = loadData(dataName=dataName, datatype="train")
+    valid = loadData(dataName=dataName, datatype="val")
+    test = loadData(dataName=dataName, datatype="test")
+
+    train_len = len(train.index)
+    val_len = len(valid.index)
+    test_len = len(test.index)
+
+    train_min_sp = min(train["Storypoint"].tolist())
+    train_max_sp = max(train["Storypoint"].tolist())
+    train_avg_sp = sum(train["Storypoint"].tolist())/train_len
+    # train_med_sp = np.median(train["Storypoint"].tolist())
+
+    val_min_sp = min(valid["Storypoint"].tolist())
+    val_max_sp = max(valid["Storypoint"].tolist())
+    val_avg_sp = sum(valid["Storypoint"].tolist())/val_len
+    # val_med_sp = np.median(valid["Storypoint"].tolist())
+
+    test_min_sp = min(test["Storypoint"].tolist())
+    test_max_sp = max(test["Storypoint"].tolist())
+    test_avg_sp = sum(test["Storypoint"].tolist())/test_len
+    # test_med_sp = np.median(test["Storypoint"].tolist())
+
+    train_min_issue_len = min(len(ele) for ele in train["Issue"].tolist())
+    train_max_issue_len = max(len(ele) for ele in train["Issue"].tolist())
+    train_avg_issue_len = sum(len(ele) for ele in train["Issue"].tolist())/train_len
+    # train_med_issue_len = np.median(len(ele) for ele in train["Issue"].tolist())
+
+    val_min_issue_len = min(len(ele) for ele in valid["Issue"].tolist())
+    val_max_issue_len = max(len(ele) for ele in valid["Issue"].tolist())
+    val_avg_issue_len = sum(len(ele) for ele in valid["Issue"].tolist())/val_len
+    # val_med_issue_len = np.median(len(ele) for ele in valid["Issue"].tolist())
+
+    test_min_issue_len = min(len(ele) for ele in test["Issue"].tolist())
+    test_max_issue_len = max(len(ele) for ele in test["Issue"].tolist())
+    test_avg_issue_len = sum(len(ele) for ele in test["Issue"].tolist())/test_len
+    # test_med_issue_len = np.median(len(ele) for ele in test["Issue"].tolist())
+
+    data_size = train_len+val_len+test_len
+    min_sp = min(train_min_sp, val_min_sp, test_min_sp)
+    max_sp = max(train_max_sp, val_max_sp, test_max_sp)
+
+    return {"Project": dataName,
+            "Size": data_size,
+            "Min SP": min_sp,
+            "Max SP": max_sp}
+
+
+
 def process(dataName="appceleratorstudio", labelName="Storypoint", LM="FastText", num_to_add=1, num_of_labels=2):
     if LM=="FastText":
-        # model = ft.load_model("../../../cc.en.300.bin")
-        print()
+        model = ft.load_model("../../cc.en.300.bin")
+        # ftmodel = None
     elif LM=="GPT2":
         model = GPT2Tokenizer.from_pretrained('gpt2')
         model.pad_token = '[PAD]'
@@ -118,6 +241,35 @@ def process(dataName="appceleratorstudio", labelName="Storypoint", LM="FastText"
     vl_indices = []
 
     lim = min(num_to_add*100, 1000)
+
+    min_sp = min(train["Storypoint"].tolist())
+    max_sp = max(train["Storypoint"].tolist())
+
+    train_list_df = train.sample(frac=1)
+    train_list = []
+
+    for indexA, rowA in train_list_df.iterrows():
+        text = rowA["Issue"]
+        if LM=="FastText":
+            text = text.replace("\n", " ")
+            text = (model.get_sentence_vector(text)).tolist()
+        elif LM=="GPT2":
+            text = GPTencode(model, text)
+        train_list.append({"A": text, "Score": rowA[labelName]})
+    train_list = pd.DataFrame(train_list)
+    
+    val_list_df = valid.sample(frac=1)
+    val_list = []
+    
+    for indexA, rowA in val_list_df.iterrows():
+        text = rowA["Issue"]
+        if LM == "FastText":
+            text = text.replace("\n", " ")
+            text = (model.get_sentence_vector(text)).tolist()
+        elif LM == "GPT2":
+            text = GPTencode(model, text)
+        val_list.append({"A": text, "Score": rowA[labelName]})
+    val_list = pd.DataFrame(val_list)
 
     print("\nGenerating training data...")
     for indexA, rowA in train.iterrows():
@@ -169,9 +321,11 @@ def process(dataName="appceleratorstudio", labelName="Storypoint", LM="FastText"
                 textA = rowA["Issue"]
                 textB = rowB["Issue"]
                 if LM == "FastText":
-                    print()
-                    # embA = (model.get_sentence_vector(textA)).tolist()
-                    # embB = (model.get_sentence_vector(textB)).tolist()
+                    # print()
+                    textA = textA.replace("\n", " ")
+                    textB = textB.replace("\n", " ")
+                    embA = (model.get_sentence_vector(textA)).tolist()
+                    embB = (model.get_sentence_vector(textB)).tolist()
                 elif LM == "GPT2":
                     embA = GPTencode(model, textA)
                     embB = GPTencode(model, textB)
@@ -180,23 +334,28 @@ def process(dataName="appceleratorstudio", labelName="Storypoint", LM="FastText"
             textA = rowA["Issue"]
             textB = rowB["Issue"]
             if LM == "FastText":
-                print()
-                # embA = (model.get_sentence_vector(textA)).tolist()
-                # embB = (model.get_sentence_vector(textB)).tolist()
+                textA = textA.replace("\n", " ")
+                textB = textB.replace("\n", " ")
+                embA = (model.get_sentence_vector(textA)).tolist()
+                embB = (model.get_sentence_vector(textB)).tolist()
             elif LM == "GPT2":
                 embA = GPTencode(model, textA)
                 embB = GPTencode(model, textB)
             res_tr.append({"A": embA, "B": embB, "Label": label})
 
     data_tr = pd.DataFrame(res_tr)
-    data_tr.to_csv("../../Data/GPT2SP Data/Embeddings/" + dataName + "_train.csv")
+    data_tr.to_csv("../Data/GPT2SP Data/Embeddings/" + dataName + "_train.csv")
 
     print("\nGenerating validation data...")
     for indexA, rowA in valid.iterrows():
         added = 0
         for i in range(num_to_add):
             foundOne = False
+            cnter = 0
             while foundOne == False:
+                if cnter >= lim:
+                    foundOne = True
+                cnter += 1
                 indexB = random.randint(0, val_len - 1)
                 while indexA == indexB:
                     indexB = random.randint(0, val_len - 1)
@@ -237,9 +396,10 @@ def process(dataName="appceleratorstudio", labelName="Storypoint", LM="FastText"
                 textA = rowA["Issue"]
                 textB = rowB["Issue"]
                 if LM == "FastText":
-                    print()
-                    # embA = (model.get_sentence_vector(textA)).tolist()
-                    # embB = (model.get_sentence_vector(textB)).tolist()
+                    textA = textA.replace("\n", " ")
+                    textB = textB.replace("\n", " ")
+                    embA = (model.get_sentence_vector(textA)).tolist()
+                    embB = (model.get_sentence_vector(textB)).tolist()
                 elif LM == "GPT2":
                     embA = GPTencode(model, textA)
                     embB = GPTencode(model, textB)
@@ -248,22 +408,27 @@ def process(dataName="appceleratorstudio", labelName="Storypoint", LM="FastText"
             textA = rowA["Issue"]
             textB = rowB["Issue"]
             if LM == "FastText":
-                print()
-                # embA = (model.get_sentence_vector(textA)).tolist()
-                # embB = (model.get_sentence_vector(textB)).tolist()
+                textA = textA.replace("\n", " ")
+                textB = textB.replace("\n", " ")
+                embA = (model.get_sentence_vector(textA)).tolist()
+                embB = (model.get_sentence_vector(textB)).tolist()
             elif LM == "GPT2":
                 embA = GPTencode(model, textA)
                 embB = GPTencode(model, textB)
             res_v.append({"A": embA, "B": embB, "Label": label})
     data_v = pd.DataFrame(res_v)
-    data_v.to_csv("../../Data/GPT2SP Data/Embeddings/" + dataName + "_val.csv")
+    data_v.to_csv("../Data/GPT2SP Data/Embeddings/" + dataName + "_val.csv")
 
     print("\nGenerating testing data...")
     for indexA, rowA in test.iterrows():
         added = 0
         for i in range(num_to_add):
             foundOne = False
+            cnter = 0
             while foundOne == False:
+                if cnter >= lim:
+                    foundOne = True
+                cnter += 1
                 indexB = random.randint(0, test_len - 1)
                 while indexA == indexB:
                     indexB = random.randint(0, test_len - 1)
@@ -304,9 +469,10 @@ def process(dataName="appceleratorstudio", labelName="Storypoint", LM="FastText"
                 textA = rowA["Issue"]
                 textB = rowB["Issue"]
                 if LM == "FastText":
-                    print()
-                    # embA = (model.get_sentence_vector(textA)).tolist()
-                    # embB = (model.get_sentence_vector(textB)).tolist()
+                    textA = textA.replace("\n", " ")
+                    textB = textB.replace("\n", " ")
+                    embA = (model.get_sentence_vector(textA)).tolist()
+                    embB = (model.get_sentence_vector(textB)).tolist()
                 elif LM == "GPT2":
                     embA = GPTencode(model, textA)
                     embB = GPTencode(model, textB)
@@ -315,20 +481,23 @@ def process(dataName="appceleratorstudio", labelName="Storypoint", LM="FastText"
             textA = rowA["Issue"]
             textB = rowB["Issue"]
             if LM == "FastText":
-                print()
-                # embA = (model.get_sentence_vector(textA)).tolist()
-                # embB = (model.get_sentence_vector(textB)).tolist()
+                textA = textA.replace("\n", " ")
+                textB = textB.replace("\n", " ")
+                embA = (model.get_sentence_vector(textA)).tolist()
+                embB = (model.get_sentence_vector(textB)).tolist()
             elif LM == "GPT2":
                 embA = GPTencode(model, textA)
                 embB = GPTencode(model, textB)
             res_ts.append({"A": embA, "B": embB, "Label": label})
     data_ts = pd.DataFrame(res_ts)
-    data_ts.to_csv("../../Data/GPT2SP Data/Embeddings/" + dataName + "_test.csv")
+    data_ts.to_csv("../Data/GPT2SP Data/Embeddings/" + dataName + "_test.csv")
 
-    print("Done.")
+    print("Done.\n")
     print("Training data size:", len(data_tr.index))
     print("Validation data size:", len(data_v.index))
     print("Testing data size:", len(data_ts.index))
+    print("Minimum story point:", min_sp)
+    print("Maximum story point:", max_sp, "\n")
 
     test_list = []
     for indexA, rowA in test.iterrows():
@@ -336,8 +505,9 @@ def process(dataName="appceleratorstudio", labelName="Storypoint", LM="FastText"
         ind = indexA
         textA = rowA["Issue"]
         if LM=="FastText":
-            print()
-            # embA = model.get_sentence_vector(textA)
+            # print()
+            textA = textA.replace("\n", " ")
+            embA = (model.get_sentence_vector(textA)).tolist()
         elif LM=="GPT2":
             embA = GPTencode(model, textA)
         toAdd = {"indexA": ind, "A": embA, "Text": rowA["Issue"], "Score": varA}
@@ -349,7 +519,7 @@ def process(dataName="appceleratorstudio", labelName="Storypoint", LM="FastText"
     # print(data_v.head(), "\n")
     # print(data_ts.head(), "\n")
 
-    return data_tr, data_v, data_ts, test_list
+    return data_tr, data_v, data_ts, test_list, max_sp, min_sp, train_list, val_list
 
 def processRegression(dataName="appceleratorstudio", labelName="Storypoint", LM="GPT2"):
     if LM=="FastText":
@@ -417,221 +587,6 @@ def processRegression(dataName="appceleratorstudio", labelName="Storypoint", LM=
 
     return data_tr, data_v, data_ts
 
-# def process2labels(dataName="appceleratorstudio", labelName="Storypoint", LM="GPT2"):
-#     if LM=="FastText":
-#         # model = ft.load_model("../../../cc.en.300.bin")
-#         print()
-#     elif LM=="GPT2":
-#         model = GPT2Tokenizer.from_pretrained('gpt2')
-#         model.pad_token = '[PAD]'
-#     train = loadData(dataName=dataName, datatype="train")
-#     valid = loadData(dataName=dataName, datatype="val")
-#     test = loadData(dataName=dataName, datatype="test")
-#
-#     # total_data = train._append(valid)
-#     # total_data = total_data._append(test)
-#     # total_data = total_data.sample(frac=1)
-#     # total_data.reset_index(inplace=True)
-#     # threshold = total_data[labelName].describe()["std"]
-#     # threshold = round(threshold.item(), 3)
-#
-#     res_tr = []
-#     res_v = []
-#     res_ts = []
-#
-#     train_len = len(train.index)
-#     test_len = len(test.index)
-#     val_len = len(valid.index)
-#
-#     print("\nGenerating training data...")
-#     for indexA, rowA in train.iterrows():
-#         for indexb, rowB in train.iterrows():
-#             varA = rowA[labelName]
-#             varB = rowB[labelName]
-#             label = 0
-#             if varA > varB:
-#                 label = 1
-#             elif varA < varB:
-#                 label = -1
-#             if label!=0:
-#                 textA = rowA["Issue"]
-#                 textB = rowB["Issue"]
-#                 # textA = filter(textA)
-#                 # textB = filter(textB)
-#                 embA = GPTencode(model, textA)
-#                 embB = GPTencode(model, textB)
-#                 res_tr.append({"A": embA, "B": embB, "Label": label})
-#     data_tr = pd.DataFrame(res_tr)
-#     data_tr.to_csv("../../Data/GPT2SP Data/Embeddings/" + dataName + "_train.csv")
-#
-#     print("\nGenerating validation data...")
-#     for indexA, rowA in valid.iterrows():
-#         for indexb, rowB in valid.iterrows():
-#             varA = rowA[labelName]
-#             varB = rowB[labelName]
-#             label = 0
-#             if varA > varB:
-#                 label = 1
-#             elif varA < varB:
-#                 label = -1
-#             if label!=0:
-#                 textA = rowA["Issue"]
-#                 textB = rowB["Issue"]
-#                 # textA = filter(textA)
-#                 # textB = filter(textB)
-#                 embA = GPTencode(model, textA)
-#                 embB = GPTencode(model, textB)
-#                 res_v.append({"A": embA, "B": embB, "Label": label})
-#     data_v = pd.DataFrame(res_v)
-#     data_v.to_csv("../../Data/GPT2SP Data/Embeddings/" + dataName + "_val.csv")
-#
-#     print("\nGenerating testing data...")
-#     for indexA, rowA in test.iterrows():
-#         for indexb, rowB in test.iterrows():
-#             varA = rowA[labelName]
-#             varB = rowB[labelName]
-#             label = 0
-#             if varA > varB:
-#                 label = 1
-#             elif varA < varB:
-#                 label = -1
-#             if label!=0:
-#                 textA = rowA["Issue"]
-#                 textB = rowB["Issue"]
-#                 # textA = filter(textA)
-#                 # textB = filter(textB)
-#                 embA = GPTencode(model, textA)
-#                 embB = GPTencode(model, textB)
-#                 res_ts.append({"A": embA, "B": embB, "Label": label})
-#     data_ts = pd.DataFrame(res_ts)
-#     data_ts.to_csv("../../Data/GPT2SP Data/Embeddings/" + dataName + "_test.csv")
-#
-#     print("Done.")
-#     print("Training data size:", len(data_tr.index))
-#     print("Validation data size:", len(data_v.index))
-#     print("Testing data size:", len(data_ts.index))
-#
-#     test_list = []
-#     for indexA, rowA in test.iterrows():
-#         varA = rowA[labelName]
-#         ind = indexA
-#         textA = rowA["Issue"]
-#         # textA = filter(textA)
-#         if LM=="FastText":
-#             print()
-#             # embA = model.get_sentence_vector(textA)
-#         elif LM=="GPT2":
-#             embA = GPTencode(model, textA)
-#         toAdd = {"indexA": ind, "A": embA, "Text": rowA["Issue"], "Score": varA}
-#         test_list.append(toAdd)
-#
-#     test_list = pd.DataFrame(test_list)
-#
-#     # print(data_tr.head(), "\n")
-#     # print(data_v.head(), "\n")
-#     # print(data_ts.head(), "\n")
-#
-#     return data_tr, data_v, data_ts, test_list
-
-# def process3labels(dataName="appceleratorstudio", labelName="Storypoint", LM="GPT2"):
-#     if LM=="FastText":
-#         # model = ft.load_model("../../../cc.en.300.bin")
-#         print()
-#     elif LM=="GPT2":
-#         model = GPT2Tokenizer.from_pretrained('gpt2')
-#         model.pad_token = '[PAD]'
-#     train = loadData(dataName=dataName, datatype="train")
-#     valid = loadData(dataName=dataName, datatype="val")
-#     test = loadData(dataName=dataName, datatype="test")
-#
-#     res_tr = []
-#     res_v = []
-#     res_ts = []
-#
-#     train_len = len(train.index)
-#     test_len = len(test.index)
-#     val_len = len(valid.index)
-#
-#     print("\nGenerating training data...")
-#     for indexA, rowA in train.iterrows():
-#         for indexb, rowB in train.iterrows():
-#             varA = rowA[labelName]
-#             varB = rowB[labelName]
-#             label = 0
-#             if varA > varB:
-#                 label = 1
-#             elif varA < varB:
-#                 label = -1
-#             textA = rowA["Issue"]
-#             textB = rowB["Issue"]
-#             embA = GPTencode(model, textA)
-#             embB = GPTencode(model, textB)
-#             res_tr.append({"A": embA, "B": embB, "Label": label})
-#     data_tr = pd.DataFrame(res_tr)
-#     data_tr.to_csv("../../Data/GPT2SP Data/Embeddings/" + dataName + "_train.csv")
-#
-#     print("\nGenerating validation data...")
-#     for indexA, rowA in valid.iterrows():
-#         for indexb, rowB in valid.iterrows():
-#             varA = rowA[labelName]
-#             varB = rowB[labelName]
-#             label = 0
-#             if varA > varB:
-#                 label = 1
-#             elif varA < varB:
-#                 label = -1
-#             textA = rowA["Issue"]
-#             textB = rowB["Issue"]
-#             embA = GPTencode(model, textA)
-#             embB = GPTencode(model, textB)
-#             res_v.append({"A": embA, "B": embB, "Label": label})
-#     data_v = pd.DataFrame(res_v)
-#     data_v.to_csv("../../Data/GPT2SP Data/Embeddings/" + dataName + "_val.csv")
-#
-#     print("\nGenerating testing data...")
-#     for indexA, rowA in test.iterrows():
-#         for indexb, rowB in test.iterrows():
-#             varA = rowA[labelName]
-#             varB = rowB[labelName]
-#             label = 0
-#             if varA > varB:
-#                 label = 1
-#             elif varA < varB:
-#                 label = -1
-#             textA = rowA["Issue"]
-#             textB = rowB["Issue"]
-#             embA = GPTencode(model, textA)
-#             embB = GPTencode(model, textB)
-#             res_ts.append({"A": embA, "B": embB, "Label": label})
-#     data_ts = pd.DataFrame(res_ts)
-#     data_ts.to_csv("../../Data/GPT2SP Data/Embeddings/" + dataName + "_test.csv")
-#
-#     print("Done.")
-#     print("Training data size:", len(data_tr.index))
-#     print("Validation data size:", len(data_v.index))
-#     print("Testing data size:", len(data_ts.index))
-#
-#     test_list = []
-#     for indexA, rowA in test.iterrows():
-#         varA = rowA[labelName]
-#         ind = indexA
-#         textA = rowA["Issue"]
-#         if LM=="FastText":
-#             print()
-#             # embA = model.get_sentence_vector(textA)
-#         elif LM=="GPT2":
-#             embA = GPTencode(model, textA)
-#         toAdd = {"indexA": ind, "A": embA, "Text": rowA["Issue"], "Score": varA}
-#         test_list.append(toAdd)
-#
-#     test_list = pd.DataFrame(test_list)
-#
-#     # print(data_tr.head(), "\n")
-#     # print(data_v.head(), "\n")
-#     # print(data_ts.head(), "\n")
-#
-#     return data_tr, data_v, data_ts, test_list
-
 
 def generateData(dataName, labelName, LM, data_type="pairwise", labels=2, num_to_add=1):
     if data_type=="pairwise":
@@ -639,4 +594,3 @@ def generateData(dataName, labelName, LM, data_type="pairwise", labels=2, num_to
     elif data_type=="regression":
         return processRegression(dataName=dataName, labelName=labelName, LM=LM)
 
-# _, _, _, _ = generateData("clover", "Storypoint", "GPT2", "regression")

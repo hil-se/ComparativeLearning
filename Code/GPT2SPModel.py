@@ -12,6 +12,8 @@ class GPT2SPModel(GPT2PreTrainedModel):
         self.dense1 = nn.Linear(config.n_embd, 4 * config.n_embd, bias=False)
         self.dense2 = nn.Linear(4 * config.n_embd, config.n_embd, bias=False)
         self.score = nn.Linear(config.n_embd, self.num_labels, bias=False)
+        # self.dense3 = nn.Linear(config.n_embd, 1, bias=False)
+        # self.score = nn.Linear(50, 1, bias=False)
 
         # self.transformer = GPT2Model.from_pretrained("openai-community/gpt2")
         # self.dense1 = nn.Linear(768, 128, bias=False)
@@ -28,11 +30,25 @@ class GPT2SPModel(GPT2PreTrainedModel):
         transformer_outputs = self.transformer(emb)
         hidden_states = transformer_outputs[0]
 
+        # print(hidden_states.shape)
+
         # MLP Layer
         hidden_states = self.dense1(hidden_states)
+        # print(hidden_states.shape)
         hidden_states = self.dense2(hidden_states)
-
+        # print(hidden_states.shape)
         logits = self.score(hidden_states)
+
+        # hidden_states = np.squeeze(hidden_states)
+        # hidden_states = self.dense3(hidden_states)
+        # # print(hidden_states.shape)
+        # hidden_states = np.squeeze(hidden_states)
+        # # print(hidden_states.shape)
+        # logits = self.score(hidden_states)
+        # # print(logits.shape)
+        # logits = np.squeeze(logits)
+        #
+        # return logits
 
         if emb is not None:
             batch_size, sequence_length = emb.shape[:2]
