@@ -2,7 +2,7 @@
 import pandas as pd
 pd.set_option('display.max_columns', None)
 import fasttext as ft
-import os
+# import os
 import re
 # from nltk.corpus import stopwords
 import random
