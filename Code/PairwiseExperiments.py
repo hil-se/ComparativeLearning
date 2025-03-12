@@ -1,14 +1,14 @@
 import pandas as pd
 from transformers import GPT2Tokenizer, GPT2PreTrainedModel, GPT2Config
-import re
+# import re
 from GPT2SPModel import GPT2SPModel
 import torch
 import numpy as np
 import scipy
 import DatasetCreator as dc
 import math
-import gc
-from sklearn import preprocessing
+# import gc
+# from sklearn import preprocessing
 from ScalerModel import ScalerModel
 from FTSVMModel import FTSVMModel
 import time
