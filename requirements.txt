@@ -2,5 +2,4 @@ torch
 pandas
 transformers
 scipy
-numpy
-sklearn
+scikit-learn
