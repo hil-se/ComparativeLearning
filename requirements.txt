@@ -3,3 +3,4 @@ pandas
 transformers
 scipy
 scikit-learn
+sentence-transformers
