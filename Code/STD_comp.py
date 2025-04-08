@@ -70,50 +70,102 @@ def build_model(input_dim):
     # )
     # optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
 
-    model.compile(
-        optimizer='SGD',
-        loss="mae",
-        # loss=tf.keras.losses.Huber(delta=1.0),
-        metrics=['mae']
-    )
-
     return model
 
+class ComparativeModel(tf.keras.Model):
+    def __init__(self, encoder, **kwargs):
+        super(ComparativeModel, self).__init__(**kwargs)
+        self.encoder = encoder
+        self.loss_tracker = tf.keras.metrics.Mean(name="loss")
+
+    @property
+    def metrics(self):
+        return [self.loss_tracker]
+
+    def call(self, features, trainable=True):
+        encodings_A = self.encoder(features["A"], training=trainable)
+        encodings_B = self.encoder(features["B"], training=trainable)
+        return tf.subtract(encodings_A, encodings_B)
+
+    def compute_loss(self, y, diff):
+        y = tf.cast(y, tf.float32)
+        loss = tf.reduce_mean(tf.math.maximum(0.0, 1.0 - (y * tf.squeeze(diff))))
+        return loss
+
+    def train_step(self, data):
+        x, y = data
+        with tf.GradientTape() as tape:
+            diff = self(x)
+            loss = self.compute_loss(y, diff)
+        gradients = tape.gradient(loss, self.trainable_variables)
+        self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
+        self.loss_tracker.update_state(loss)
+        return {"loss": self.loss_tracker.result()}
+
+    # def test_step(self, features):
+    #     encodings_A, encodings_B = self(features)
+    #     loss = self.compute_loss(encodings_A, encodings_B, features["Label"])
+    #     self.loss_tracker.update_state(loss)
+    #     return {"loss": self.loss_tracker.result()}
+
+    def predict(self, X):
+        """Predicts preference between two items."""
+        return np.array(self.encoder(np.array(X.tolist())))
+
+def generate_comparative_judgments(train_list, N=1):
+    m = len(train_list)
+    features = {"A": [], "B": [], "Label": []}
+    for i in range(m):
+        n = 0
+        while n < N:
+            j = np.random.randint(0, m)
+            if train_list["Score"][i] > train_list["Score"][j]:
+                features["A"].append(train_list["A"][i])
+                features["B"].append(train_list["A"][j])
+                features["Label"].append(1.0)
+                # features.append({"A": train_list["A"][i], "B": train_list["A"][j], "Label": 1.0})
+                n += 1
+            elif train_list["Score"][i] < train_list["Score"][j]:
+                features["A"].append(train_list["A"][i])
+                features["B"].append(train_list["A"][j])
+                features["Label"].append(-1.0)
+                # features.append({"A": train_list["A"][i], "B": train_list["A"][j], "Label": -1.0})
+                n += 1
+    features = {key: np.array(features[key]) for key in features}
+    return features
+
 def train_and_test(dataname):
-    # model = SVR()
-    # print(dataname)
+
     train_list, val_list, test_list = process(dataname, "Storypoint")
     train_list = pd.concat([train_list, val_list], axis=0)
     train_list = train_list.sample(frac=1.0)
+    train_list.index = range(len(train_list))
+    features = generate_comparative_judgments(train_list, N=2)
 
     train_x = np.array(train_list["A"].tolist())
     train_y = np.array(train_list["Score"].tolist())
     test_x = np.array(test_list["A"].tolist())
     test_y = test_list["Score"].tolist()
 
-    model = build_model((train_x.shape[1]))
+    encoder = build_model((train_x.shape[1]))
+    de = ComparativeModel(encoder=encoder)
 
-    checkpoint_path = "checkpoint/STD.keras"
+    checkpoint_path = "checkpoint/STD_comp.keras"
     os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
 
+    # de.compile(optimizer="SGD", loss=tf.keras.losses.Hinge())
+    de.compile(optimizer="SGD")
     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss', patience=100, factor=0.3, min_lr=1e-6, verbose=1)
     checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, monitor="loss", save_best_only=True,
-                                                    verbose=1)
-    # early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=150, verbose=1,
-    #                                                   restore_best_weights=True)
+                                                    save_weights_only=True, verbose=1, )
 
-    history = model.fit(
-        train_x, train_y,
-        validation_data=None,
-        batch_size=32,
-        epochs=500,
-        callbacks=[reduce_lr, checkpoint],
-        verbose=1
-    )
+    # Train model
+    history = de.fit(features, features["Label"], epochs=500, batch_size=32, callbacks=[reduce_lr, checkpoint], verbose=1)
+    print("\nLoading best checkpoint model...")
+    de.load_weights(checkpoint_path)
 
-    # model.fit(train_x, train_y)
-    preds_test = model.predict(test_x).flatten()
-    preds_train = model.predict(train_x).flatten()
+    preds_test = de.predict(test_x).flatten()
+    preds_train = de.predict(train_x).flatten()
 
 
     pearsons_train = scipy.stats.pearsonr(preds_train, train_y)[0]
@@ -127,9 +179,9 @@ def train_and_test(dataname):
 
 
 
-datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
-         "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
-# datas = ["appceleratorstudio"]
+# datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
+#          "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
+datas = ["clover"]
 
 results = []
 for d in datas:
@@ -138,6 +190,6 @@ for d in datas:
     results.append({"Data": d, "Pearson Train": r_train, "Spearman Train": rs_train, "Pearson Test": r_test, "Spearman Test": rs_test})
 results = pd.DataFrame(results)
 print(results)
-results.to_csv("../Results/STD_noval.csv", index=False)
+results.to_csv("../Results/STD_comp_noval.csv", index=False)
 
 

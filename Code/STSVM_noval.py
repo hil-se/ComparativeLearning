@@ -54,10 +54,10 @@ def build_model(input_dim):
         tf.keras.layers.BatchNormalization(),
         tf.keras.layers.Dropout(0.3),
 
-        tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.2),
-
+        # tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
+        # tf.keras.layers.BatchNormalization(),
+        # tf.keras.layers.Dropout(0.2),
+        #
         tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
         tf.keras.layers.BatchNormalization(),
 
@@ -80,7 +80,7 @@ def build_model(input_dim):
     return model
 
 def train_and_test(dataname):
-    # model = SVR()
+
     # print(dataname)
     train_list, val_list, test_list = process(dataname, "Storypoint")
     train_list = pd.concat([train_list, val_list], axis=0)
@@ -91,27 +91,28 @@ def train_and_test(dataname):
     test_x = np.array(test_list["A"].tolist())
     test_y = test_list["Score"].tolist()
 
-    model = build_model((train_x.shape[1]))
+    # model = build_model((train_x.shape[1]))
+    #
+    # checkpoint_path = "checkpoint/STD.keras"
+    # os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
+    #
+    # reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss', patience=100, factor=0.3, min_lr=1e-6, verbose=1)
+    # checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, monitor="loss", save_best_only=True,
+    #                                                 verbose=1)
+    # # early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=150, verbose=1,
+    # #                                                   restore_best_weights=True)
+    #
+    # history = model.fit(
+    #     train_x, train_y,
+    #     validation_data=None,
+    #     batch_size=32,
+    #     epochs=500,
+    #     callbacks=[reduce_lr, checkpoint],
+    #     verbose=1
+    # )
 
-    checkpoint_path = "checkpoint/STD.keras"
-    os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
-
-    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss', patience=100, factor=0.3, min_lr=1e-6, verbose=1)
-    checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, monitor="loss", save_best_only=True,
-                                                    verbose=1)
-    # early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=150, verbose=1,
-    #                                                   restore_best_weights=True)
-
-    history = model.fit(
-        train_x, train_y,
-        validation_data=None,
-        batch_size=32,
-        epochs=500,
-        callbacks=[reduce_lr, checkpoint],
-        verbose=1
-    )
-
-    # model.fit(train_x, train_y)
+    model = SVR(kernel='rbf')
+    model.fit(train_x, train_y)
     preds_test = model.predict(test_x).flatten()
     preds_train = model.predict(train_x).flatten()
 
@@ -138,6 +139,6 @@ for d in datas:
     results.append({"Data": d, "Pearson Train": r_train, "Spearman Train": rs_train, "Pearson Test": r_test, "Spearman Test": rs_test})
 results = pd.DataFrame(results)
 print(results)
-results.to_csv("../Results/STD_noval.csv", index=False)
+results.to_csv("../Results/STSVM_noval.csv", index=False)
 
 
