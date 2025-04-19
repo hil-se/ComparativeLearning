@@ -134,13 +134,13 @@ def generate_comparative_judgments(train_list, N=1):
     features = {key: np.array(features[key]) for key in features}
     return features
 
-def train_and_test(dataname):
+def train_and_test(dataname, N=1):
 
     train_list, val_list, test_list = process(dataname, "Storypoint")
     train_list = pd.concat([train_list, val_list], axis=0)
     train_list = train_list.sample(frac=1.0)
     train_list.index = range(len(train_list))
-    features = generate_comparative_judgments(train_list, N=2)
+    features = generate_comparative_judgments(train_list, N=N)
 
     train_x = np.array(train_list["A"].tolist())
     train_y = np.array(train_list["Score"].tolist())
@@ -185,9 +185,11 @@ datas = ["clover"]
 
 results = []
 for d in datas:
-    r_train, rs_train, r_test, rs_test = train_and_test(d)
-    print(d, r_train, rs_train, r_test, rs_test)
-    results.append({"Data": d, "Pearson Train": r_train, "Spearman Train": rs_train, "Pearson Test": r_test, "Spearman Test": rs_test})
+    for n in [1,2,3,4,5,10]:
+        for i in range(20):
+            r_train, rs_train, r_test, rs_test = train_and_test(d, N=n)
+            print(d, r_train, rs_train, r_test, rs_test)
+            results.append({"Data": d, "N": n, "Pearson Train": r_train, "Spearman Train": rs_train, "Pearson Test": r_test, "Spearman Test": rs_test})
 results = pd.DataFrame(results)
 print(results)
 results.to_csv("../Results/STD_comp_noval.csv", index=False)

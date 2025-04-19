@@ -98,7 +98,7 @@ def train_and_test(dataname):
 
     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=10, factor=0.3, min_lr=1e-6, verbose=1)
     checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, monitor="val_loss", save_best_only=True,
-                                                    verbose=1)
+                                                    save_weights_only=True, verbose=1)
     # early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=150, verbose=1,
     #                                                   restore_best_weights=True)
 
@@ -110,7 +110,8 @@ def train_and_test(dataname):
         callbacks=[reduce_lr, checkpoint],
         verbose=1
     )
-
+    print("\nLoading best checkpoint model...")
+    model.load_weights(checkpoint_path)
     # model.fit(train_x, train_y)
     preds_test = model.predict(test_x).flatten()
     preds_train = model.predict(train_x).flatten()
@@ -129,13 +130,14 @@ def train_and_test(dataname):
 
 # datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
 #          "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
-datas = ["appceleratorstudio"]
+datas = ["clover"]
 
 results = []
 for d in datas:
-    r_train, rs_train, r_test, rs_test = train_and_test(d)
-    print(d, r_train, rs_train, r_test, rs_test)
-    results.append({"Data": d, "Pearson Train": r_train, "Spearman Train": rs_train, "Pearson Test": r_test, "Spearman Test": rs_test})
+    for i in range(20):
+        r_train, rs_train, r_test, rs_test = train_and_test(d)
+        print(d, r_train, rs_train, r_test, rs_test)
+        results.append({"Data": d, "Pearson Train": r_train, "Spearman Train": rs_train, "Pearson Test": r_test, "Spearman Test": rs_test})
 results = pd.DataFrame(results)
 print(results)
 results.to_csv("../Results/STD.csv", index=False)
