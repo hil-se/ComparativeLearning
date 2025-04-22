@@ -153,8 +153,8 @@ def train_and_test(dataname, N=1):
     checkpoint_path = "checkpoint/STD_comp.keras"
     os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
 
-    # de.compile(optimizer="SGD", loss=tf.keras.losses.Hinge())
-    de.compile(optimizer="SGD")
+    de.compile(optimizer="SGD", loss=tf.keras.losses.Hinge())
+    # de.compile(optimizer="SGD")
     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss', patience=100, factor=0.3, min_lr=1e-6, verbose=1)
     checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, monitor="loss", save_best_only=True,
                                                     save_weights_only=True, verbose=1, )
@@ -181,7 +181,7 @@ def train_and_test(dataname, N=1):
 
 # datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
 #          "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
-datas = ["clover"]
+datas = ["jirasoftware"]
 
 results = []
 for d in datas:

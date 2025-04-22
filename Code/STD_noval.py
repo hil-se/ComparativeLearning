@@ -128,13 +128,13 @@ def train_and_test(dataname):
 
 
 
-datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
-         "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
-# datas = ["clover"]
+# datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
+#          "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
+datas = ["jirasoftware"]
 
 results = []
 for d in datas:
-    for i in range(1):
+    for i in range(20):
         r_train, rs_train, r_test, rs_test = train_and_test(d)
         print(d, r_train, rs_train, r_test, rs_test)
         results.append({"Data": d, "Pearson Train": r_train, "Spearman Train": rs_train, "Pearson Test": r_test, "Spearman Test": rs_test})
