@@ -46,39 +46,6 @@ def process(dataName="appceleratorstudio", labelName="Storypoint"):
     return train_list, val_list, test_list
 
 
-def build_model(input_dim):
-    model = tf.keras.Sequential([
-        tf.keras.layers.InputLayer(input_shape=(input_dim,)),
-
-        tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.3),
-
-        # tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
-        # tf.keras.layers.BatchNormalization(),
-        # tf.keras.layers.Dropout(0.2),
-        #
-        tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
-        tf.keras.layers.BatchNormalization(),
-
-        tf.keras.layers.Dense(1, activation=None)
-    ])
-
-    # initial_learning_rate = 0.001
-    # lr_schedule = tf.keras.optimizers.schedules.CosineDecay(
-    #     initial_learning_rate, decay_steps=5000, alpha=0.0001
-    # )
-    # optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
-
-    model.compile(
-        optimizer='SGD',
-        loss="mae",
-        # loss=tf.keras.losses.Huber(delta=1.0),
-        metrics=['mae']
-    )
-
-    return model
-
 def train_and_test(dataname):
 
     # print(dataname)
@@ -90,26 +57,6 @@ def train_and_test(dataname):
     train_y = np.array(train_list["Score"].tolist())
     test_x = np.array(test_list["A"].tolist())
     test_y = test_list["Score"].tolist()
-
-    # model = build_model((train_x.shape[1]))
-    #
-    # checkpoint_path = "checkpoint/STD.keras"
-    # os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
-    #
-    # reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss', patience=100, factor=0.3, min_lr=1e-6, verbose=1)
-    # checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, monitor="loss", save_best_only=True,
-    #                                                 verbose=1)
-    # # early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=150, verbose=1,
-    # #                                                   restore_best_weights=True)
-    #
-    # history = model.fit(
-    #     train_x, train_y,
-    #     validation_data=None,
-    #     batch_size=32,
-    #     epochs=500,
-    #     callbacks=[reduce_lr, checkpoint],
-    #     verbose=1
-    # )
 
     model = SVR(kernel='rbf')
     model.fit(train_x, train_y)
