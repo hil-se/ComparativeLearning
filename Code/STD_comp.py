@@ -89,7 +89,7 @@ class ComparativeModel(tf.keras.Model):
 
     def compute_loss(self, y, diff):
         y = tf.cast(y, tf.float32)
-        loss = tf.reduce_mean(tf.math.maximum(0.0, 1.0 - (y * tf.squeeze(diff))))
+        loss = tf.reduce_mean(tf.square(tf.math.maximum(0.0, 1.0 - (y * tf.squeeze(diff)))))
         return loss
 
     def train_step(self, data):
@@ -153,11 +153,11 @@ def train_and_test(dataname, N=1):
     checkpoint_path = "checkpoint/STD_comp.keras"
     os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
 
-    de.compile(optimizer="SGD", loss=tf.keras.losses.Hinge())
-    # de.compile(optimizer="SGD")
+    # de.compile(optimizer="SGD", loss=tf.keras.losses.SquaredHinge())
+    de.compile(optimizer="SGD")
     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss', patience=100, factor=0.3, min_lr=1e-6, verbose=1)
     checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, monitor="loss", save_best_only=True,
-                                                    save_weights_only=True, verbose=1, )
+                                                    save_weights_only=True, verbose=1)
 
     # Train model
     history = de.fit(features, features["Label"], epochs=500, batch_size=32, callbacks=[reduce_lr, checkpoint], verbose=1)
@@ -185,7 +185,8 @@ datas = ["jirasoftware"]
 
 results = []
 for d in datas:
-    for n in [1,2,3,4,5,10]:
+    # for n in [1,2,3,4,5,10]:
+    for n in [1]:
         for i in range(20):
             r_train, rs_train, r_test, rs_test = train_and_test(d, N=n)
             print(d, r_train, rs_train, r_test, rs_test)

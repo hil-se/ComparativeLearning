@@ -64,6 +64,7 @@ def build_model(input_dim):
         tf.keras.layers.Dense(1, activation=None)
     ])
 
+
     # initial_learning_rate = 0.001
     # lr_schedule = tf.keras.optimizers.schedules.CosineDecay(
     #     initial_learning_rate, decay_steps=5000, alpha=0.0001

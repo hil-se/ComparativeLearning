@@ -87,7 +87,6 @@ def train_and_test(dataname, N=1):
     preds_test = model.decision_function(test_x).flatten()
     preds_train = model.decision_function(train_x).flatten()
 
-
     pearsons_train = scipy.stats.pearsonr(preds_train, train_y)[0]
     spearmans_train = scipy.stats.spearmanr(preds_train, train_y).statistic
     pearsons_test = scipy.stats.pearsonr(preds_test, test_y)[0]
