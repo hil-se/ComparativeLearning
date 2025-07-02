@@ -89,7 +89,7 @@ class ComparativeModel(tf.keras.Model):
 
     def compute_loss(self, y, diff):
         y = tf.cast(y, tf.float32)
-        loss = tf.reduce_mean(tf.square(tf.math.maximum(0.0, 1.0 - (y * tf.squeeze(diff)))))
+        loss = tf.reduce_mean(tf.math.maximum(0.0, 1.0 - (y * tf.squeeze(diff))))
         return loss
 
     def train_step(self, data):
