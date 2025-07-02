@@ -2,7 +2,7 @@ import numpy as np
 import scipy
 import os
 from sentence_transformers import SentenceTransformer
-from sklearn.svm import SVR
+from sklearn.svm import LinearSVC
 import pandas as pd
 import tensorflow as tf
 from pdb import set_trace
@@ -45,23 +45,47 @@ def process(dataName="appceleratorstudio", labelName="Storypoint"):
 
     return train_list, val_list, test_list
 
+def generate_comparative_judgments(train_list, N=1):
+    m = len(train_list)
+    features = {"A": [], "B": [], "Label": []}
+    for i in range(m):
+        n = 0
+        while n < N:
+            j = np.random.randint(0, m)
+            if train_list["Score"][i] > train_list["Score"][j]:
+                features["A"].append(train_list["A"][i])
+                features["B"].append(train_list["A"][j])
+                features["Label"].append(1.0)
+                # features.append({"A": train_list["A"][i], "B": train_list["A"][j], "Label": 1.0})
+                n += 1
+            elif train_list["Score"][i] < train_list["Score"][j]:
+                features["A"].append(train_list["A"][i])
+                features["B"].append(train_list["A"][j])
+                features["Label"].append(-1.0)
+                # features.append({"A": train_list["A"][i], "B": train_list["A"][j], "Label": -1.0})
+                n += 1
+    features = {key: np.array(features[key]) for key in features}
+    return features
 
-def train_and_test(dataname):
+def train_and_test(dataname, N=1):
 
-    # print(dataname)
     train_list, val_list, test_list = process(dataname, "Storypoint")
     train_list = pd.concat([train_list, val_list], axis=0)
     train_list = train_list.sample(frac=1.0)
+    train_list.index = range(len(train_list))
+    features = generate_comparative_judgments(train_list, N=N)
 
     train_x = np.array(train_list["A"].tolist())
     train_y = np.array(train_list["Score"].tolist())
     test_x = np.array(test_list["A"].tolist())
     test_y = test_list["Score"].tolist()
 
-    model = SVR(kernel='rbf')
-    model.fit(train_x, train_y)
-    preds_test = model.predict(test_x).flatten()
-    preds_train = model.predict(train_x).flatten()
+    train_feature = features["A"]-features["B"]
+
+    model = LinearSVC()
+    model.fit(train_feature, features["Label"])
+    preds_test = model.decision_function(test_x).flatten()
+    preds_train = model.decision_function(train_x).flatten()
 
 
     pearsons_train = scipy.stats.pearsonr(preds_train, train_y)[0]
@@ -75,15 +99,18 @@ def train_and_test(dataname):
 
 
 
-datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
-         "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
-# datas = ["appceleratorstudio"]
+# datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
+#          "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
+datas = ["jirasoftware"]
 
 results = []
 for d in datas:
-    r_train, rs_train, r_test, rs_test = train_and_test(d)
-    print(d, r_train, rs_train, r_test, rs_test)
-    results.append({"Data": d, "Pearson Train": r_train, "Spearman Train": rs_train, "Pearson Test": r_test, "Spearman Test": rs_test})
+    for n in [1,2,3,4,5,10]:
+    # for n in [1]:
+        for i in range(20):
+            r_train, rs_train, r_test, rs_test = train_and_test(d, N=n)
+            print(d, r_train, rs_train, r_test, rs_test)
+            results.append({"Data": d, "N": n, "Pearson Train": r_train, "Spearman Train": rs_train, "Pearson Test": r_test, "Spearman Test": rs_test})
 results = pd.DataFrame(results)
 print(results)
 results.to_csv("../Results/STSVM_noval.csv", index=False)
