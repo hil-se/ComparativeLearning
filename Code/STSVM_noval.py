@@ -82,7 +82,7 @@ def train_and_test(dataname, N=1):
 
     train_feature = features["A"]-features["B"]
 
-    model = LinearSVC()
+    model = LinearSVC(loss="hinge")
     model.fit(train_feature, features["Label"])
     preds_test = model.decision_function(test_x).flatten()
     preds_train = model.decision_function(train_x).flatten()
