@@ -50,18 +50,18 @@ def build_model(input_dim):
     model = tf.keras.Sequential([
         tf.keras.layers.InputLayer(input_shape=(input_dim,)),
 
-        tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.3),
+        # tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
+        # tf.keras.layers.BatchNormalization(),
+        # tf.keras.layers.Dropout(0.3),
+        #
+        # tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
+        # tf.keras.layers.BatchNormalization(),
+        # tf.keras.layers.Dropout(0.2),
+        #
+        # tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
+        # tf.keras.layers.BatchNormalization(),
 
-        tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.2),
-
-        tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
-        tf.keras.layers.BatchNormalization(),
-
-        tf.keras.layers.Dense(1, activation=None)
+        tf.keras.layers.Dense(1, activation="linear")
     ])
 
     # initial_learning_rate = 0.001
@@ -114,23 +114,27 @@ class ComparativeModel(tf.keras.Model):
 
 def generate_comparative_judgments(train_list, N=1):
     m = len(train_list)
+    train_list.index = range(m)
     features = {"A": [], "B": [], "Label": []}
+    seen = set()
     for i in range(m):
         n = 0
         while n < N:
             j = np.random.randint(0, m)
+            if (i,j) in seen or (j,i) in seen:
+                continue
+            set_trace()
             if train_list["Score"][i] > train_list["Score"][j]:
                 features["A"].append(train_list["A"][i])
                 features["B"].append(train_list["A"][j])
                 features["Label"].append(1.0)
-                # features.append({"A": train_list["A"][i], "B": train_list["A"][j], "Label": 1.0})
                 n += 1
             elif train_list["Score"][i] < train_list["Score"][j]:
                 features["A"].append(train_list["A"][i])
                 features["B"].append(train_list["A"][j])
                 features["Label"].append(-1.0)
-                # features.append({"A": train_list["A"][i], "B": train_list["A"][j], "Label": -1.0})
                 n += 1
+            seen.add((i, j))
     features = {key: np.array(features[key]) for key in features}
     return features
 
@@ -154,13 +158,13 @@ def train_and_test(dataname, N=1):
     os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
 
     # de.compile(optimizer="SGD", loss=tf.keras.losses.SquaredHinge())
-    de.compile(optimizer="SGD")
+    de.compile(optimizer="adam")
     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss', patience=100, factor=0.3, min_lr=1e-6, verbose=1)
     checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, monitor="loss", save_best_only=True,
                                                     save_weights_only=True, verbose=1)
 
     # Train model
-    history = de.fit(features, features["Label"], epochs=500, batch_size=32, callbacks=[reduce_lr, checkpoint], verbose=1)
+    history = de.fit(features, features["Label"], epochs=100, batch_size=32, callbacks=[reduce_lr, checkpoint], verbose=1)
     print("\nLoading best checkpoint model...")
     de.load_weights(checkpoint_path)
 

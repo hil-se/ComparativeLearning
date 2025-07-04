@@ -50,18 +50,18 @@ def build_model(input_dim):
     model = tf.keras.Sequential([
         tf.keras.layers.InputLayer(input_shape=(input_dim,)),
 
-        tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.3),
+        # tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
+        # tf.keras.layers.BatchNormalization(),
+        # tf.keras.layers.Dropout(0.3),
+        #
+        # tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
+        # tf.keras.layers.BatchNormalization(),
+        # tf.keras.layers.Dropout(0.2),
+        #
+        # tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
+        # tf.keras.layers.BatchNormalization(),
 
-        tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.2),
-
-        tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
-        tf.keras.layers.BatchNormalization(),
-
-        tf.keras.layers.Dense(1, activation=None)
+        tf.keras.layers.Dense(1, activation="linear")
     ])
 
     # initial_learning_rate = 0.001
@@ -71,7 +71,7 @@ def build_model(input_dim):
     # optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
 
     model.compile(
-        optimizer='SGD',
+        optimizer='adam',
         loss="mae",
         # loss=tf.keras.losses.Huber(delta=1.0),
         metrics=['mae']
@@ -80,8 +80,7 @@ def build_model(input_dim):
     return model
 
 def train_and_test(dataname):
-    # model = SVR()
-    # print(dataname)
+
     train_list, val_list, test_list = process(dataname, "Storypoint")
 
     train_x = np.array(train_list["A"].tolist())
@@ -106,7 +105,7 @@ def train_and_test(dataname):
         train_x, train_y,
         validation_data=(val_x, val_y),
         batch_size=32,
-        epochs=500,
+        epochs=1000,
         callbacks=[reduce_lr, checkpoint],
         verbose=1
     )

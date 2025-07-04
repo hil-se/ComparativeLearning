@@ -2,7 +2,7 @@ import numpy as np
 import scipy
 import os
 from sentence_transformers import SentenceTransformer
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVR
 import pandas as pd
 import tensorflow as tf
 from pdb import set_trace
@@ -45,6 +45,74 @@ def process(dataName="appceleratorstudio", labelName="Storypoint"):
 
     return train_list, val_list, test_list
 
+
+def build_model(input_dim):
+    model = tf.keras.Sequential([
+        tf.keras.layers.InputLayer(input_shape=(input_dim,)),
+
+        # tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
+        # tf.keras.layers.BatchNormalization(),
+        # tf.keras.layers.Dropout(0.3),
+        #
+        # tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
+        # tf.keras.layers.BatchNormalization(),
+        # tf.keras.layers.Dropout(0.2),
+        #
+        # tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
+        # tf.keras.layers.BatchNormalization(),
+
+        tf.keras.layers.Dense(1, activation="linear")
+    ])
+
+    # initial_learning_rate = 0.001
+    # lr_schedule = tf.keras.optimizers.schedules.CosineDecay(
+    #     initial_learning_rate, decay_steps=5000, alpha=0.0001
+    # )
+    # optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
+
+    return model
+
+class ComparativeModel(tf.keras.Model):
+    def __init__(self, encoder, **kwargs):
+        super(ComparativeModel, self).__init__(**kwargs)
+        self.encoder = encoder
+        self.loss_tracker = tf.keras.metrics.Mean(name="loss")
+
+    @property
+    def metrics(self):
+        return [self.loss_tracker]
+
+    def call(self, features, trainable=True):
+        encodings_A = self.encoder(features["A"], training=trainable)
+        encodings_B = self.encoder(features["B"], training=trainable)
+        return tf.subtract(encodings_A, encodings_B)
+
+    def compute_loss(self, y, diff):
+        y = tf.cast(y, tf.float32)
+        loss = tf.reduce_mean(tf.math.maximum(0.0, 1.0 - (y * tf.squeeze(diff))))
+        return loss
+
+    def train_step(self, data):
+        x, y = data
+        with tf.GradientTape() as tape:
+            diff = self(x)
+            loss = self.compute_loss(y, diff)
+        gradients = tape.gradient(loss, self.trainable_variables)
+        self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
+        self.loss_tracker.update_state(loss)
+        return {"loss": self.loss_tracker.result()}
+
+    def test_step(self, data):
+        x, y = data
+        diff = self(x)
+        loss = self.compute_loss(y, diff)
+        self.loss_tracker.update_state(loss)
+        return {"loss": self.loss_tracker.result()}
+
+    def predict(self, X):
+        """Predicts preference between two items."""
+        return np.array(self.encoder(np.array(X.tolist())))
+
 def generate_comparative_judgments(train_list, N=1):
     m = len(train_list)
     train_list.index = range(m)
@@ -56,7 +124,6 @@ def generate_comparative_judgments(train_list, N=1):
             j = np.random.randint(0, m)
             if (i,j) in seen or (j,i) in seen:
                 continue
-            set_trace()
             if train_list["Score"][i] > train_list["Score"][j]:
                 features["A"].append(train_list["A"][i])
                 features["B"].append(train_list["A"][j])
@@ -74,22 +141,39 @@ def generate_comparative_judgments(train_list, N=1):
 def train_and_test(dataname, N=1):
 
     train_list, val_list, test_list = process(dataname, "Storypoint")
-    train_list = pd.concat([train_list, val_list], axis=0)
     train_list = train_list.sample(frac=1.0)
     train_list.index = range(len(train_list))
+    val_list = val_list.sample(frac=1.0)
+    val_list.index = range(len(val_list))
     features = generate_comparative_judgments(train_list, N=N)
+    features_val = generate_comparative_judgments(val_list, N=N)
+    val_data = (features_val, features_val["Label"])
 
     train_x = np.array(train_list["A"].tolist())
     train_y = np.array(train_list["Score"].tolist())
     test_x = np.array(test_list["A"].tolist())
     test_y = test_list["Score"].tolist()
 
-    train_feature = features["A"]-features["B"]
+    encoder = build_model((train_x.shape[1]))
+    de = ComparativeModel(encoder=encoder)
 
-    model = LinearSVC(loss="hinge")
-    model.fit(train_feature, features["Label"])
-    preds_test = model.decision_function(test_x).flatten()
-    preds_train = model.decision_function(train_x).flatten()
+    checkpoint_path = "checkpoint/STD_comp.keras"
+    os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
+
+    # de.compile(optimizer="SGD", loss=tf.keras.losses.SquaredHinge())
+    de.compile(optimizer="adam")
+    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=100, factor=0.3, min_lr=1e-6, verbose=1)
+    checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, monitor="val_loss", save_best_only=True,
+                                                    save_weights_only=True, verbose=1)
+
+    # Train model
+    history = de.fit(features, features["Label"], validation_data=val_data, epochs=300, batch_size=32, callbacks=[reduce_lr, checkpoint], verbose=1)
+    print("\nLoading best checkpoint model...")
+    de.load_weights(checkpoint_path)
+
+    preds_test = de.predict(test_x).flatten()
+    preds_train = de.predict(train_x).flatten()
+
 
     pearsons_train = scipy.stats.pearsonr(preds_train, train_y)[0]
     spearmans_train = scipy.stats.spearmanr(preds_train, train_y).statistic
@@ -109,13 +193,12 @@ datas = ["jirasoftware"]
 results = []
 for d in datas:
     for n in [1,2,3,4,5,10]:
-    # for n in [1]:
         for i in range(20):
             r_train, rs_train, r_test, rs_test = train_and_test(d, N=n)
             print(d, r_train, rs_train, r_test, rs_test)
             results.append({"Data": d, "N": n, "Pearson Train": r_train, "Spearman Train": rs_train, "Pearson Test": r_test, "Spearman Test": rs_test})
 results = pd.DataFrame(results)
 print(results)
-results.to_csv("../Results/STSVM_noval.csv", index=False)
+results.to_csv("../Results/STD_comp_noval.csv", index=False)
 
 
