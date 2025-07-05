@@ -1,10 +1,8 @@
 import numpy as np
 import scipy
-import os
 from sentence_transformers import SentenceTransformer
 from sklearn.svm import LinearSVC
 import pandas as pd
-import tensorflow as tf
 from pdb import set_trace
 
 def loadData(dataName="appceleratorstudio", datatype="train"):
@@ -49,7 +47,6 @@ def generate_comparative_judgments(train_list, N=1):
     m = len(train_list)
     train_list.index = range(m)
     features = {"A": [], "B": [], "Label": []}
-    seen = set()
     for i in range(m):
         n = 0
         while n < N:
@@ -102,15 +99,15 @@ def train_and_test(dataname, N=1):
 
 
 
-# datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
-#          "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
-datas = ["jirasoftware"]
+datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
+         "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
+# datas = ["jirasoftware"]
 
 results = []
 for d in datas:
     for n in [1,2,3,4,5,10]:
     # for n in [1]:
-        for i in range(20):
+        for i in range(10):
             r_train, rs_train, r_test, rs_test = train_and_test(d, N=n)
             print(d, r_train, rs_train, r_test, rs_test)
             results.append({"Data": d, "N": n, "Pearson Train": r_train, "Spearman Train": rs_train, "Pearson Test": r_test, "Spearman Test": rs_test})
