@@ -47,13 +47,13 @@ def generate_comparative_judgments(train_list, N=1):
     m = len(train_list)
     train_list.index = range(m)
     features = {"A": [], "B": [], "Label": []}
+    seen = set()
     for i in range(m):
         n = 0
         while n < N:
             j = np.random.randint(0, m)
             if (i,j) in seen or (j,i) in seen:
                 continue
-            set_trace()
             if train_list["Score"][i] > train_list["Score"][j]:
                 features["A"].append(train_list["A"][i])
                 features["B"].append(train_list["A"][j])
