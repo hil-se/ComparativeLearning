@@ -123,7 +123,6 @@ def generate_comparative_judgments(train_list, N=1):
             j = np.random.randint(0, m)
             if (i,j) in seen or (j,i) in seen:
                 continue
-            set_trace()
             if train_list["Score"][i] > train_list["Score"][j]:
                 features["A"].append(train_list["A"][i])
                 features["B"].append(train_list["A"][j])
@@ -183,15 +182,15 @@ def train_and_test(dataname, N=1):
 
 
 
-# datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
-#          "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
-datas = ["jirasoftware"]
+datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
+         "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
+# datas = ["jirasoftware"]
 
 results = []
 for d in datas:
-    # for n in [1,2,3,4,5,10]:
-    for n in [1]:
-        for i in range(20):
+    for n in [1,2,3,4,5,10]:
+    # for n in [1]:
+        for i in range(10):
             r_train, rs_train, r_test, rs_test = train_and_test(d, N=n)
             print(d, r_train, rs_train, r_test, rs_test)
             results.append({"Data": d, "N": n, "Pearson Train": r_train, "Spearman Train": rs_train, "Pearson Test": r_test, "Spearman Test": rs_test})
