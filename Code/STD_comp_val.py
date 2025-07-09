@@ -188,11 +188,12 @@ def train_and_test(dataname, N=1):
 
 datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
          "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
-# datas = ["jirasoftware"]
+# datas = ["bamboo"]
 
 results = []
 for d in datas:
     for n in [1,2,3,4,5,10]:
+    # for n in [1]:
         for i in range(10):
             r_train, rs_train, r_test, rs_test = train_and_test(d, N=n)
             print(d, r_train, rs_train, r_test, rs_test)

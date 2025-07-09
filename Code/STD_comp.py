@@ -184,7 +184,7 @@ def train_and_test(dataname, N=1):
 
 datas = ["appceleratorstudio", "aptanastudio", "bamboo", "clover", "datamanagement", "duracloud", "jirasoftware",
          "mesos", "moodle", "mule", "mulestudio", "springxd", "talenddataquality", "talendesb", "titanium", "usergrid"]
-# datas = ["jirasoftware"]
+# datas = ["bamboo"]
 
 results = []
 for d in datas:
